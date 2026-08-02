@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Guest" ADD COLUMN "role" TEXT;
+ALTER TABLE "Guest" ADD COLUMN "remindedCount" INTEGER NOT NULL DEFAULT 0;

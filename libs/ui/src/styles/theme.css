@@ -1,0 +1,69 @@
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-hairline: var(--hairline);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-ink: var(--warning-ink);
+  --color-warning-soft: var(--warning-soft);
+
+  --radius-sm: var(--radius-sharp);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-card);
+  --radius-xl: calc(var(--radius-card) + 2px);
+
+  --spacing-hit-min: 44px;
+  --spacing-hit: 48px;
+  --spacing-hit-lg: 56px;
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-serif-display: var(--font-serif-display);
+  --font-serif-read: var(--font-serif-read);
+
+  --tracking-micro: 0.14em;
+  --tracking-eyebrow: 0.18em;
+  --tracking-wordmark: 0.05em;
+
+  --ease-brand: var(--ease);
+  --default-transition-duration: var(--duration);
+  --default-transition-timing-function: var(--ease);
+
+  --shadow-card: 0 6px 18px rgba(46, 38, 32, 0.1);
+  --shadow-modal: 0 24px 60px rgba(46, 38, 32, 0.3);
+  --shadow-sheet: 0 -16px 40px rgba(46, 38, 32, 0.24);
+
+  --animate-infinite-progress: infinite-progress 3s
+    cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+
+@keyframes infinite-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

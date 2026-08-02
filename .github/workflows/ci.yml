@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      # This enables task distribution via Nx Cloud
+      # Run this command as early as possible, before dependencies are installed
+      # Learn more at https://nx.dev/docs/reference/nx-cloud-cli#npx-nxcloud-startcirun
+      - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="e2e"
+
+      # Cache node_modules
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Prepend any command with "nx record --" to record its logs to Nx Cloud
+      - run: npx nx record -- npx nx format:check --base="remotes/origin/main"
+      - run: npx nx run-many -t lint test build typecheck e2e
+      # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/docs/features/ci-features/self-healing-ci
+      - run: npx nx fix-ci
+        if: always()
+
+      # Template style-vocabulary verify gate
+      # (plans/260730-1502-template-style-vocabulary/phase-05-extend-verify-gate.md).
+      # `/_dev/templates/verify` is dev-only (gated on `import.meta.env.DEV`,
+      # see apps/studio/src/app/app.tsx) — must run against `nx serve studio`,
+      # never a production preview.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start studio dev server
+        run: npx nx serve studio &
+      - name: Wait for studio dev server
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:4201/ > /dev/null && exit 0
+            sleep 2
+          done
+          echo "studio dev server did not become ready in time" >&2
+          exit 1
+      - name: Verify templates
+        run: npm run verify:templates

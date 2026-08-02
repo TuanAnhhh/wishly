@@ -1,0 +1,64 @@
+:root {
+  --background: #F6F1E7;
+  --card: #FDFBF7;
+  --popover: #FDFBF7;
+  --muted: #F6F1E7;
+  --secondary: #F2ECE0;
+
+  --foreground: #2E2620;
+  --card-foreground: #2E2620;
+  --popover-foreground: #2E2620;
+  --secondary-foreground: #5A4B3F;
+  --muted-foreground: #8B7B6C;
+  --disabled-foreground: #B8AA99;
+
+  --primary: #B04A3A;
+  --primary-hover: #8F3A2C;
+  --primary-foreground: #FDFBF7;
+  --ring: #B04A3A;
+  --accent-soft: #F5E3DE;
+  --accent: #F5E3DE;
+  --accent-foreground: #2E2620;
+
+  --border: #E2D8C8;
+  --border-strong: #D8CDBB;
+  --hairline: #EDE4D5;
+  --input: #D8CDBB;
+
+  --success: #7A8B6F;
+  --success-ink: #4F5D47;
+  --success-soft: #E7EBE1;
+
+  --warning: #C9A961;
+  --warning-ink: #87692B;
+  --warning-soft: #F5EBD6;
+
+  --destructive: #A33A2E;
+
+  --radius-sharp: 2px;
+  --radius: 3px;
+  --radius-card: 4px;
+  --radius-pill: 999px;
+
+  --duration: 140ms;
+  --ease: ease;
+
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", "Times New Roman", serif;
+  --font-serif-display: "Playfair Display", serif;
+  --font-serif-read: "Lora", Georgia, serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

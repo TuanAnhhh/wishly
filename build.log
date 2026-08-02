@@ -1,0 +1,63 @@
+
+ NX   Running target build for 3 projects:
+
+- web
+- studio
+- api
+
+
+
+> nx run studio:build  [local cache]
+
+> vite build
+
+(node:254037) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+vite v8.1.5 building client environment for production...
+[2Ktransforming...[32m✓[0m 20 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[0m[32mindex.html                 [0m[1;2m  0.47 kB[0m[2m │ gzip:  0.30 kB[0m
+[2mdist/[0m[2massets/[0m[35mindex-Bb3lgmVX.css  [0m[1;2m  1.25 kB[0m[2m │ gzip:  0.62 kB[0m
+[2mdist/[0m[2massets/[0m[36mindex-E64G_iSu.js   [0m[1;2m197.72 kB[0m[2m │ gzip: 62.62 kB[0m
+
+✓ built in 152ms
+
+> nx run web:build  [local cache]
+
+> vite build
+
+(node:254575) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+vite v8.1.5 building client environment for production...
+[2Ktransforming...[32m✓[0m 20 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[0m[32mindex.html                 [0m[1;2m  0.47 kB[0m[2m │ gzip:  0.29 kB[0m
+[2mdist/[0m[2massets/[0m[35mindex-Bb3lgmVX.css  [0m[1;2m  1.25 kB[0m[2m │ gzip:  0.62 kB[0m
+[2mdist/[0m[2massets/[0m[36mindex-BMuhbGxu.js   [0m[1;2m197.72 kB[0m[2m │ gzip: 62.61 kB[0m
+
+✓ built in 125ms
+
+> nx run api:build
+
+> webpack-cli build
+
+(node:271457) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+webpack compiled [1m[32msuccessfully[39m[22m (88873f9cdab3fd5a)
+
+
+
+ NX   Successfully ran target build for 3 projects
+
+Nx read the output from the cache instead of running the command for 2 out of 3 tasks.
+
+  Run duration:      1.6s
+  Cache:             2/3 hit (67%)
+  Critical path:     1.6s (1 task)
+  Recoverable time:  <1ms
+
+  Recommendations:
+    - Speed up or split the longest tasks on the critical path:
+        api:build    1.6s

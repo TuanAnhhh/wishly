@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventType {
+  WEDDING
+  BIRTHDAY
+  BABY_MONTH
+  CORPORATE
+}
+
+enum Tier {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+enum InvStatus {
+  DRAFT
+  PUBLISHED
+  ENDED
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String?      @unique
+  phone       String?      @unique
+  name        String
+  avatarUrl   String?
+  provider    String
+  invitations Invitation[]
+  createdAt   DateTime     @default(now())
+}
+
+model Plan {
+  id           String  @id
+  name         String
+  price        Int
+  priceByEvent Json?
+  guestLimit   Int?
+  features     Json
+  active       Boolean @default(true)
+  sortOrder    Int
+}
+
+model Invitation {
+  id            String    @id @default(cuid())
+  ownerId       String?
+  owner         User?     @relation(fields: [ownerId], references: [id])
+  anonSessionId String?
+  claimedAt     DateTime?
+  expiresAt     DateTime?
+  slug          String    @unique
+  templateId    String
+  eventType     EventType
+  eventDate     DateTime?
+  status        InvStatus @default(DRAFT)
+  tier          Tier      @default(FREE)
+  content       Json
+  theme         Json
+  blocks        Json
+  ogImageKey    String?
+  guestLimit    Int       @default(30)
+  viewCount     Int       @default(0)
+  /** Set when owner bulk-sends Zalo messages — blocks refund abuse */
+  bulkSentAt    DateTime?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  guests        Guest[]
+  orders        Order[]
+
+  /** Nghị định 13/2023 consent — collected once per event before the first guest-list save */
+  consentAt DateTime?
+  consentBy String?
+
+  /** 3 | 6 | 12 months; drives purgeAt. Owner-configurable in privacy settings. */
+  retentionMonths Int       @default(6)
+  purgeAt         DateTime?
+  purgedAt        DateTime?
+
+  passwordHash    String?
+  publicGuestbook Boolean @default(true)
+  hideGift        Boolean @default(false)
+
+  seatingLockedAt DateTime?
+  /** [{at, by, action}] — only written after seating is locked */
+  seatingLog      Json?
+  seatingTables   SeatingTable[]
+  staffAccess     StaffAccess[]
+  /** Hex brand accent — CORPORATE only */
+  brandColor      String?
+
+  /** Public share token for /tong-ket/:token — not the invitation slug */
+  recapToken      String?  @unique
+  /** Owner opt-in: show gift totals on public recap */
+  showGiftOnRecap Boolean  @default(false)
+  album           Album?
+  thankYouSends   ThankYouSend[]
+
+  /** B2B partner studio (nullable — B2C unchanged) */
+  partnerId        String?
+  partner          Partner? @relation(fields: [partnerId], references: [id])
+  assignedMemberId String?
+  clientCode       String?
+
+  @@index([ownerId])
+  @@index([anonSessionId])
+  @@index([partnerId])
+}
+
+model Partner {
+  id            String                 @id @default(cuid())
+  name          String
+  slug          String                 @unique
+  planTier      String                 @default("studio") // studio | agency
+  slotLimit     Int                    @default(20)
+  status        String                 @default("active") // active | past_due | cancelled
+  createdAt     DateTime               @default(now())
+  brand         PartnerBrand?
+  members       PartnerMember[]
+  subscriptions PartnerSubscription[]
+  templates     PartnerTemplate[]
+  invitations   Invitation[]
+}
+
+model PartnerBrand {
+  partnerId    String   @id
+  partner      Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  logoKey      String?
+  color        String?
+  subdomain    String?  @unique
+  domainStatus String   @default("none") // none | pending | active | failed
+  signature    String?
+  updatedAt    DateTime @updatedAt
+}
+
+model PartnerMember {
+  id         String    @id @default(cuid())
+  partnerId  String
+  partner    Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  userId     String?
+  email      String
+  role       String // admin | edit | view
+  inviteToken String?  @unique
+  invitedAt  DateTime  @default(now())
+  joinedAt   DateTime?
+  lastSeenAt DateTime?
+
+  @@unique([partnerId, email])
+  @@index([userId])
+  @@index([partnerId])
+}
+
+model PartnerTemplate {
+  id        String    @id @default(cuid())
+  partnerId String
+  partner   Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  name      String
+  eventType EventType
+  theme     Json
+  blocks    Json
+  content   Json
+  thumbKey  String?
+  useCount  Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([partnerId])
+}
+
+model PartnerSubscription {
+  id            String           @id @default(cuid())
+  partnerId     String
+  partner       Partner          @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  planTier      String
+  amountMonthly Int
+  slotLimit     Int
+  status        String // active | past_due | cancelled
+  periodStart   DateTime
+  periodEnd     DateTime
+  provider      String           @default("bank_manual")
+  createdAt     DateTime         @default(now())
+  invoices      PartnerInvoice[]
+
+  @@index([partnerId])
+}
+
+model PartnerInvoice {
+  id             String              @id @default(cuid())
+  subscriptionId String
+  subscription   PartnerSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  code           String              @unique
+  periodStart    DateTime
+  periodEnd      DateTime
+  amount         Int
+  status         String // pending | paid | overdue
+  paidAt         DateTime?
+  pdfKey         String?
+  createdAt      DateTime            @default(now())
+
+  @@index([subscriptionId])
+}
+
+model Album {
+  id           String       @id @default(cuid())
+  invitationId String       @unique
+  invitation   Invitation   @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  title        String       @default("Album")
+  opensAt      DateTime
+  closesAt     DateTime
+  createdAt    DateTime     @default(now())
+  photos       AlbumPhoto[]
+}
+
+model AlbumPhoto {
+  id           String   @id @default(cuid())
+  albumId      String
+  album        Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  mediaKey     String
+  uploaderName String
+  guestId      String?
+  status       String   @default("pending") // pending | ok | hidden
+  byteSize     Int?
+  createdAt    DateTime @default(now())
+
+  @@index([albumId, status])
+}
+
+/** Per-anon-session upload quota for public album (P11). */
+model AlbumUploadQuota {
+  id        String   @id @default(cuid())
+  albumId   String
+  sessionId String
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([albumId, sessionId])
+  @@index([albumId])
+}
+
+model ThankYouSend {
+  id           String     @id @default(cuid())
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  guestId      String
+  persona      String // came | gift | absent | quiet
+  sentAt       DateTime   @default(now())
+
+  @@unique([invitationId, guestId])
+  @@index([invitationId])
+}
+
+model StaffAccess {
+  id           String     @id @default(cuid())
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  token        String     @unique
+  label        String
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  lastSeenAt   DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@index([invitationId])
+}
+
+model SeatingTable {
+  id           String     @id @default(cuid())
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  label        String
+  kind         String // 'round' | 'long' | 'stage'
+  capacity     Int
+  x            Int
+  y            Int
+  createdAt    DateTime   @default(now())
+  guests       Guest[]
+
+  @@index([invitationId])
+}
+
+model Guest {
+  id            String     @id @default(cuid())
+  invitationId  String
+  invitation    Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  name          String
+  phone         String?
+  group         String?
+  /// Honorific / vai: anh | chị | cô | chú | bạn — derived from group, editable
+  role          String?
+  note          String?
+  token         String     @unique
+  sentVia       String?
+  consentAt     DateTime?
+  /// Soft RSVP reminders sent (max 2 enforced in service)
+  remindedCount Int        @default(0)
+  /// Party size for seating (includes the guest). Synced from RSVP unless manual.
+  partySize       Int           @default(1)
+  partySizeManual Boolean       @default(false)
+  tableId         String?
+  table           SeatingTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  /// Gate pass — distinct from Guest.token (Zalo share link is not a secret)
+  passCode     String?   @unique
+  checkedInAt  DateTime?
+  checkedInBy  String?
+  walkIn       Boolean   @default(false)
+  mealChoice   String? // 'standard' | 'vegetarian'
+  allergyNote  String?
+  lang         String? // 'vi' | 'en'
+  title        String? // job title (corporate)
+  /** Manual override for thank-you persona (P11) */
+  thanksPersona String?
+  createdAt     DateTime   @default(now())
+  rsvps         Rsvp[]
+  giftEntries   GiftEntry[]
+
+  @@index([invitationId])
+  @@index([tableId])
+}
+
+model Rsvp {
+  id           String   @id @default(cuid())
+  invitationId String
+  guestId      String?
+  guest        Guest?   @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  name         String
+  attending    Boolean
+  plusOnes     Int      @default(0)
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@index([invitationId])
+  @@index([guestId])
+}
+
+model GuestbookEntry {
+  id           String   @id @default(cuid())
+  invitationId String
+  name         String
+  message      String
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+
+  @@index([invitationId, createdAt])
+  @@index([invitationId, status])
+}
+
+model GiftAccount {
+  id           String @id @default(cuid())
+  invitationId String
+  side         String
+  bank         String
+  accountNo    String
+  holder       String
+}
+
+/** Manual gift ledger — never read bank credentials */
+model GiftEntry {
+  id           String     @id @default(cuid())
+  invitationId String
+  guestId      String?
+  guest        Guest?     @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  giverName    String
+  amount       Int
+  side         String
+  note         String?
+  receivedAt   DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+
+  @@index([invitationId])
+  @@index([guestId])
+}
+
+model Template {
+  id        String  @id
+  slug      String  @unique
+  name      String
+  tier      Tier
+  thumbKey  String
+  blocks    Json
+  active    Boolean @default(true)
+  sortOrder Int
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  userId       String
+  /** Nullable + SetNull: deleting an event must not delete its invoices (10y accounting retention). */
+  invitationId String?
+  invitation   Invitation? @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  planId       String
+  tier         Tier
+  amount       Int
+  planSnapshot Json
+  discountCode String?
+  provider     String
+  status       String
+  /** Bank transfer reference e.g. TV-4821 */
+  shortCode    String      @unique
+  invoiceInfo  Json?
+  refundable   Boolean     @default(true)
+  claimedAt    DateTime?
+  confirmedBy  String?
+  confirmedAt  DateTime?
+  paidAt       DateTime?
+  raw          Json?
+  createdAt    DateTime    @default(now())
+
+  @@index([userId])
+  @@index([invitationId])
+  @@index([status])
+}
+
+model Discount {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  percent   Int
+  maxUses   Int?
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+}
